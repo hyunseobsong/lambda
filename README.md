@@ -9,6 +9,19 @@ A repository for the publication entitled ``Representing Organic Matter Thermody
 * KBase app to simulate biogeochemical models in a batch reactor ([KBase link](https://narrative.kbase.us/#appcatalog/app/BatchBiogeochemicalReactionModel/run_BatchBiogeochemicalReactionModel/), [GitHub](https://github.com/coldfire79/BatchBiogeochemicalReactionModel))
 * KBase app to simulate biogeochemical models in a continuous stirred tank reactor (CSTR) ([KBase link](https://narrative.kbase.us/#catalog/apps/BatchBiogeochemicalReactionModel/run_cstr/), [GitHub](https://github.com/coldfire79/BatchBiogeochemicalReactionModel))
 
+## System requirements
+R > 3.5.0
+
+## Run the demo dataset
+To run the demo in the publication, select `samples` as either `"south"` or `"north"`. 
+```R
+################## User input ##################
+fticr_datafile = "fticr_data.csv"
+samples = "south"
+# samples = "north"
+################################################
+```
+
 ## Citation
 Song H -S, Stegen JC, Graham EB, Lee J -Y, Garayburu-Caruso VA, Nelson WC, Chen X, Moulton JD and Scheibe TD (2020) Representing Organic Matter Thermodynamics in Biogeochemical Reactions via Substrate-Explicit Modeling. <i>Front. Microbiol.</i> 11:531756. doi: 10.3389/fmicb.2020.531756
 
