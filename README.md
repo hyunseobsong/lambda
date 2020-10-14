@@ -23,7 +23,7 @@ samples = "south"
 ```
 
 ## Citation
-Song H -S, Stegen JC, Graham EB, Lee J -Y, Garayburu-Caruso VA, Nelson WC, Chen X, Moulton JD and Scheibe TD (2020) Representing Organic Matter Thermodynamics in Biogeochemical Reactions via Substrate-Explicit Modeling. <i>Front. Microbiol.</i> 11:531756. doi: 10.3389/fmicb.2020.531756
+Song H-S, Stegen JC, Graham EB, Lee J-Y, Garayburu-Caruso VA, Nelson WC, Chen X, Moulton JD and Scheibe TD (2020) Representing Organic Matter Thermodynamics in Biogeochemical Reactions via Substrate-Explicit Modeling. <i>Front. Microbiol.</i> 11:531756. doi: 10.3389/fmicb.2020.531756
 
 ## Contacts
 Hyun-Seob Song (hsong5@unl.edu); Joon-Yong Lee (joonyong.lee@pnnl.gov)
