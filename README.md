@@ -1,6 +1,8 @@
 # Representing Organic Matter Thermodynamics in Biogeochemical Reactions via Substrate-Explicit Modeling
 
-A repository for the publication entitled ``Representing Organic Matter Thermodynamics in Biogeochemical Reactions via Substrate-Explicit Modeling`` (doi: 10.3389/fmicb.2020.531756, [Preprint link](https://www.biorxiv.org/content/10.1101/2020.02.27.968669v1)). In this paper, we proposed a new concept of biogeochemical modeling (termed substrate-explicit modeling) that enables parameterizing organic matter (OM)-specific oxidative degradation pathways and reaction rates based on the thermodynamic properties of OM pools.
+## Update: A newer version of the lambda code has been released on December 1, 2020.The previous code mistakenly swapped 'S' and 'P' in assigining chemical formulas, which has now been fixed. 
+
+A repository for the publication entitled ``Representing Organic Matter Thermodynamics in Biogeochemical Reactions via Substrate-Explicit Modeling`` (https://doi.org/10.3389/fmicb.2020.531756). In this paper, we proposed a new concept of biogeochemical modeling (termed substrate-explicit modeling) that enables parameterizing organic matter (OM)-specific oxidative degradation pathways and reaction rates based on the thermodynamic properties of OM pools.
 
 ## Links
 * <b>Substrate-explicit Modeling Tutorial</b> ([KBase narrative](https://kbase.us/n/65526/69/)): It demonstates how to apply a thermodynamic theory (known as λ theory) to convert molecular formulas of compounds (derived from FTICR-MS peaks using [Formularity](https://omics.pnl.gov/software/formularity)) into stoichiometric and kinetic forms of biogeochemical reactions and how to use the resulting kinetic equations to simulate dynamic conversion of compounds in batch and continuous stirred tank reactors.
