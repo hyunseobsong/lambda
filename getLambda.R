@@ -64,8 +64,8 @@ getThermoStoich <- function(chemForm) {
   b <- chemForm[2]
   c <- chemForm[3]
   d <- chemForm[4]
-  e <- chemForm[5]
-  f <- chemForm[6]
+  e <- chemForm[6]  # P
+  f <- chemForm[5]  # S
   z <- 0 #chemForm[7]
   
   # Step 1a) stoichD: stoichiometries for an electron donor
