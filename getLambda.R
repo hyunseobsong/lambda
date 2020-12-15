@@ -181,7 +181,7 @@ getThermoStoich <- function(chemForm) {
   delGsyn <- 200  # kJ/(mol.X)
   if (is.nan(delGan_O2)) {
     lambda_O2 <- NaN
-    stoichMet_O2 <- NaN
+    stoichMet_O2 <- array(NaN, dim=length(stoichCat))
     delGdis_O2 <- NaN
   } else {
     if (delGan_O2 < 0)
@@ -196,50 +196,24 @@ getThermoStoich <- function(chemForm) {
     delGdis_O2 <- -(drop(delGf0 %*% stoichMet_O2) + R*T*stoichMet_O2[iProton]*log(1e-7))
   }
   
-  if (is.nan(delGan_HCO3)) {
-    lambda_HCO3 <- NaN
-    stoichMet_HCO3 <- NaN
-    delGdis_HCO3 <- NaN
-  } else {
-    if (delGan_HCO3 < 0)
-      m_HCO3 <- 1
-    else
-      m_HCO3 <- -1
-    lambda_HCO3 <- (delGan_HCO3*eta^m_HCO3+delGsyn)/(-delGcat*eta)
-    
-    if (lambda_HCO3 > 0)
-      stoichMet_HCO3 <- lambda_HCO3*stoichCat+stoichAn_HCO3
-    else
-      stoichMet_HCO3 <- stoichAn_HCO3
-    delGdis_HCO3 <- -(drop(delGf0 %*% stoichMet_HCO3) + R*T*stoichMet_HCO3[iProton]*log(1e-7))
-  }
+  # if (is.nan(delGan_HCO3)) {
+  #   lambda_HCO3 <- NaN
+  #   stoichMet_HCO3 <- NaN
+  #   delGdis_HCO3 <- NaN
+  # } else {
+  #   if (delGan_HCO3 < 0)
+  #     m_HCO3 <- 1
+  #   else
+  #     m_HCO3 <- -1
+  #   lambda_HCO3 <- (delGan_HCO3*eta^m_HCO3+delGsyn)/(-delGcat*eta)
+  #   
+  #   if (lambda_HCO3 > 0)
+  #     stoichMet_HCO3 <- lambda_HCO3*stoichCat+stoichAn_HCO3
+  #   else
+  #     stoichMet_HCO3 <- stoichAn_HCO3
+  #   delGdis_HCO3 <- -(drop(delGf0 %*% stoichMet_HCO3) + R*T*stoichMet_HCO3[iProton]*log(1e-7))
+  # }
   
-  # delGdis <- 200+18*(6-a)^1.8 + exp(((-0.2+nosc)^2)^0.16*(3.6+0.4*a))
-  
-  # list(delGcox0 = delGcox0,
-  #      delGd0 = delGd0,
-  #      delGd = delGd,
-  #      delGcat0 = delGcat0,
-  #      delGcat = delGcat,
-  #      delGan0_O2 = delGan0_O2,
-  #      delGan0_HCO3 = delGan0_HCO3,
-  #      delGan_O2 = delGan_O2,
-  #      delGan_HCO3 = delGan_HCO3,
-  #      delGdis_O2 = delGdis_O2,
-  #      delGdis_HCO3 = delGdis_HCO3,
-  #      lambda_O2 = lambda_O2,
-  #      lambda_HCO3 = lambda_HCO3,
-  #      stoich.D = stoichD,
-  #      stoich.A = stoichA,
-  #      stoich.Cat = stoichCat,
-  #      stoich.An_O2 = stoichAn_O2,
-  #      stoich.An_HCO3 = stoichAn_HCO3,
-  #      stoich.Met_O2 = stoichMet_O2,
-  #      stoich.Met_HCO3 = stoichMet_HCO3)
-  # c(delGcox0,delGd0,delGd,delGcat0,delGcat,delGan0_O2,delGan0_HCO3,
-  #   delGan_O2,delGan_HCO3,delGdis_O2,delGdis_HCO3,lambda_O2,lambda_HCO3,
-  #   stoichD,stoichA,stoichCat,stoichAn_O2,stoichAn_HCO3,
-  #   stoichMet_O2,stoichMet_HCO3)
   c(delGcox0,delGd0,delGcox,delGd,delGcat0,delGcat,delGan0_O2,
     delGan_O2,delGdis_O2,lambda_O2,
     stoichD,stoichA,stoichCat,stoichAn_O2,
@@ -249,8 +223,7 @@ getThermoStoich <- function(chemForm) {
 
 getLambda <- function(formulaMatrix) {
   nrows = nrow(formulaMatrix)
-  # lambda_rst <- array(0, dim=c(nrows, 83))
-  lambda_rst <- array(0, dim=c(nrows, 59))
+  lambda_rst <- array(0, dim=c(nrows, 60))
   for(i in 1:nrows) {
     lambda_rst[i,] <- getThermoStoich(formulaMatrix[i,])
   }
@@ -264,22 +237,18 @@ out <- getLambda(numericalFormula)
 df <- as.data.frame(out)
 # build col names
 # names <- rep("", 83)
-names <- rep("", 59)
-# names[1:13] <- c("delGcox0","delGd0","delGd","delGcat0","delGcat","delGan0_O2","delGan0_HCO3",
-#                  "delGan_O2","delGan_HCO3","delGdis_O2","delGdis_HCO3","lambda_O2","lambda_HCO3")
-names[1:9] <- c("delGcox0","delGd0","delGcox","delGd","delGcat0","delGcat","delGan0_O2",
+names <- rep("", 60)
+
+names[1:10] <- c("delGcox0","delGd0","delGcox","delGd","delGcat0","delGcat","delGan0_O2",
                 "delGan_O2","delGdis_O2","lambda_O2")
 stoich_colnames <- c("donor","h2o","hco3","nh4","hpo4","hs","h","e","acceptor","biom")
-# stoich_types <- c("stoichD","stoichA","stoichCat","stoichAn_O2","stoichAn_HCO3",
-#                   "stoichMet_O2","stoichMet_HCO3")
+
 stoich_types <- c("stoichD","stoichA","stoichCat","stoichAn_O2","stoichMet_O2")
 for (i in 1:length(stoich_types)) {
-  # names[((i-1)*10+14):(i*10+13)] <- array(sapply(stoich_types[i], paste, stoich_colnames, sep="_"))
-  names[((i-1)*10+10):(i*10+9)] <- array(sapply(stoich_types[i], paste, stoich_colnames, sep="_"))
+  names[((i-1)*10+11):(i*10+10)] <- array(sapply(stoich_types[i], paste, stoich_colnames, sep="_"))
 }
 colnames(df) <- names
 df['formula'] <- molecularFormula
 
 write.table(df, file = outfile, row.names=FALSE, sep = "\t")
-# save(df, file = "sampleAll.RData")
 
