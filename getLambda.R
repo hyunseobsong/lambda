@@ -170,7 +170,7 @@ getThermoStoich <- function(chemForm) {
   T <- 298.15  # K
   iProton <- 7  # [eD,h2o,hco3-,nh4+,hpo4^2-,hs-,h+,e-,eA,biom]
   delGd <- delGd0+R*T*stoichD[iProton]*log(1e-7)
-  delGcox <- delGd0 / a
+  delGcox <- delGd / a
   delGcat <- delGcat0+R*T*stoichCat[iProton]*log(1e-7)
   delGan_O2 <- delGan0_O2+R*T*stoichAn_O2[iProton]*log(1e-7)
   delGan_HCO3 <- delGan0_HCO3+R*T*stoichAn_HCO3[iProton]*log(1e-7)
