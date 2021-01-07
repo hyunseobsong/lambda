@@ -1,72 +1,98 @@
 " 
-Compute the lambda for chemical compositions
+Compute the lambda from chemical compositions
 "
+library(tidyverse)
 
-################## User input ##################
-fticr_datafile = "fticr_data.csv"
-samples = "south"
-# samples = "north"
-################################################
+CHEMICAL_ELEMENTS = c("C","H","N","O","P","S")
 
-outfile = paste0("lambda_", samples, ".txt")
+# functions ------------------------------------------------------
 
-CHEMICAL_ELEMENTS = c("C","H","N","O","S","P")
-
-# read file
-df = read.csv(fticr_datafile, header = TRUE, as.is = TRUE)
-df = df[df$mf != "",]
-df = df[-grep("[A-z0-9]C13", df$mf),]  # to drop the formulas containing C13
-
-highActivity <- grep("^S1*", names(df), value = TRUE)
-lowActivity <- grep("^N1*", names(df), value = TRUE)
-
-# extract molecular formulae
-if (samples == "south"){
-  df <- df[rowSums(df[,highActivity] > 0) > 0,]  
-} else {
-  df <- df[rowSums(df[,lowActivity] > 0) > 0,]
+# extract chemical compositions from the table
+get_compositions <- function(df) {
+  chemical_compositions <- NULL
+  formulas <- NULL
+  if ("C" %in% colnames(df)) {
+    tdf <- df %>% 
+      filter(C > 0)
+    if ("C13" %in% colnames(df)) {
+      tdf <- tdf %>% 
+        filter(C13 == 0)
+    }
+    chemical_compositions <- as.matrix(tdf[CHEMICAL_ELEMENTS])
+    formulas <- tdf$MolForm
+  } else if ("MolForm" %in% colnames(df)) {
+    tdf <- df %>% 
+      drop_na(MolForm) %>%
+      filter(MolForm != "")
+    parse_output <- parse_formulas(tdf$MolForm)
+    formulas <- tdf$MolForm[parse_output$is_valid]
+    chemical_compositions <- parse_output$composition[parse_output$is_valid,]
+    warning("`MolForm` column is parsed to get the chemical compositions")
+  } else {
+    error("Either columns for compositions (e.g., C, H, N, ...) or `MolForm` column is required.")
+  }
+  
+  if ("Z" %in% colnames(df)) {
+    chemical_compositions <- cbind(chemical_compositions, "Z"=df$Z)
+  } else {
+    chemical_compositions <- cbind(chemical_compositions, "Z"=0)
+  }
+  
+  list(
+    "chemical_compositions" = chemical_compositions,
+    "formulas" = formulas
+  )
 }
 
-molecularFormula <- unique(df$mf)
-
-# extract numerical formulae
-numericalFormula <- array(0, dim=c(length(molecularFormula), length(CHEMICAL_ELEMENTS)))
-for (k in 1:length(molecularFormula)){
-  formula <- molecularFormula[k]
-  ge <- gregexpr("[A-Z]\\d*", formula, perl=TRUE)
-  s_index <- ge[[1]]
-  s_len <- attr(s_index, "match.length")
-  for (i in 1:length(s_len)){
-    token <- substr(formula, s_index[i], s_index[i] + s_len[i] - 1)
-    element <- substr(token, 1, 1)
-    if (grepl(element, "CHNOSP")) {
-      idx = which(CHEMICAL_ELEMENTS %in% element)
-      if (numericalFormula[k, idx] > 0) next  # for C13
-      if (s_len[i] == 1) {
-        numericalFormula[k, idx] = 1
-      } else {
-        numElement <- try(strtoi(substr(formula, s_index[i] + 1, s_index[i] + s_len[i] - 1)))
-        if (class(numElement)=="integer"){
-          numericalFormula[k, idx] = numElement
-        } else {
-          print(paste("[ERROR] an unknown chemical element found:", token, "in", formula))
+# parse formulas into compositions
+parse_formulas <- function(formulas) {
+  rst <- array(0, dim=c(length(formulas), length(CHEMICAL_ELEMENTS)))
+  is_valid <- array(TRUE, dim=c(length(formulas)))
+  for (k in 1:length(formulas)){
+    formula <- formulas[k]
+    ge <- gregexpr("[A-Z]\\d*", formula, perl=TRUE)
+    s_index <- ge[[1]]
+    s_len <- attr(s_index, "match.length")
+    for (i in 1:length(s_len)){
+      token <- substr(formula, s_index[i], s_index[i] + s_len[i] - 1)
+      element <- substr(token, 1, 1)
+      if (grepl(element, "CHNOSP")) {
+        idx = which(CHEMICAL_ELEMENTS %in% element)
+        if (rst[k, idx] > 0) {   # same element again? (e.g., C13)
+          if (token != "C13") {  
+            warning(paste0(formula,": wrong format"))
+          }
+          is_valid[k] = FALSE
+          next
         }
+        if (s_len[i] == 1) {
+          rst[k, idx] = 1
+        } else {
+          num_element <- try(strtoi(substr(formula, s_index[i] + 1, s_index[i] + s_len[i] - 1)))
+          if (class(num_element)=="integer"){
+            rst[k, idx] = num_element
+          } else {
+            print(paste("[ERROR] an unknown chemical element found:", token, "in", formula))
+          }
+        }
+      } else {
+        print(paste("[ERROR] an unknown chemical element found:", element, "in", formula))
       }
-    } else {
-      print(paste("[ERROR] an unknown chemical element found:", element, "in", formula))
     }
   }
+  colnames(rst) <- CHEMICAL_ELEMENTS
+  list("composition"=rst, "is_valid"=is_valid)
 }
 
-######################## compute lambda ########################
+# compute thermodynamic properties and lambda values
 getThermoStoich <- function(chemForm) {
   a <- chemForm[1]
   b <- chemForm[2]
   c <- chemForm[3]
   d <- chemForm[4]
-  e <- chemForm[6]  # P
-  f <- chemForm[5]  # S
-  z <- 0 #chemForm[7]
+  e <- chemForm[5]
+  f <- chemForm[6]
+  z <- chemForm[7]
   
   # Step 1a) stoichD: stoichiometries for an electron donor
   ySource <- -1
@@ -118,29 +144,14 @@ getThermoStoich <- function(chemForm) {
   stoichAnStarB[1] <- 0
   
   # Step 2b) "overall" anabolic reaction
-  eA4Anabolic=c( # electron acceptor for anabolic reaction
-    'O2',    # Kleerebezem and Van Loosdrecht (2010)
-    'HCO3-' # % McCarty (year?)
-  )
-  
-  for (i in 1:length(eA4Anabolic)) {
-    eA4Ana <- eA4Anabolic[i]
-    if (eA4Ana == 'O2') {
-      stoichAnStar_O2 <- stoichAnStarB+(1/a)*stoichD
-      yEana <- stoichAnStar_O2[8]
-      if (yEana > 0)
-        stoichAn_O2 <- stoichAnStar_O2-yEana/yEa*stoichA
-      else if (yEana < 0)
-        stoichAn_O2 <- stoichAnStar_O2-yEana/yEd*stoichD
-      else
-        stoichAn_O2 <- stoichAnStar_O2
-    } else if (eA4Ana == 'HCO3-') {
-      yEd <- stoichD[8] # TODO
-      yEa <- stoichAnStarB[8]
-      stoichAn_HCO3 <- stoichD-(yEd/yEa)*stoichAnStarB
-      stoichAn_HCO3 <- stoichAn_HCO3/stoichAn_HCO3[10]  # TODO: normalize?
-    }
-  }
+  stoichAnStar <- stoichAnStarB+(1/a)*stoichD
+  yEana <- stoichAnStar[8]
+  if (yEana > 0)
+    stoichAn <- stoichAnStar-yEana/yEa*stoichA
+  else if (yEana < 0)
+    stoichAn <- stoichAnStar-yEana/yEd*stoichD
+  else
+    stoichAn <- stoichAnStar
   
   # Step 3: get lambda
   
@@ -162,8 +173,7 @@ getThermoStoich <- function(chemForm) {
   
   # - standard delG at pH=0
   delGcat0 <- drop(delGf0 %*% stoichCat)
-  delGan0_O2 <- drop(delGf0 %*% stoichAn_O2)
-  delGan0_HCO3 <- drop(delGf0 %*% stoichAn_HCO3)
+  delGan0 <- drop(delGf0 %*% stoichAn)
   
   # - stadard delG at pH=7
   R <- 0.008314  # kJ/(K.mol)
@@ -172,83 +182,82 @@ getThermoStoich <- function(chemForm) {
   delGd <- delGd0+R*T*stoichD[iProton]*log(1e-7)
   delGcox <- delGd / a
   delGcat <- delGcat0+R*T*stoichCat[iProton]*log(1e-7)
-  delGan_O2 <- delGan0_O2+R*T*stoichAn_O2[iProton]*log(1e-7)
-  delGan_HCO3 <- delGan0_HCO3+R*T*stoichAn_HCO3[iProton]*log(1e-7)
+  delGan <- delGan0+R*T*stoichAn[iProton]*log(1e-7)
   
   # The Thermodynamic Electron Equivalents Model (TEEM)
   # --------
   eta <- 0.43
   delGsyn <- 200  # kJ/(mol.X)
-  if (is.nan(delGan_O2)) {
-    lambda_O2 <- NaN
-    stoichMet_O2 <- array(NaN, dim=length(stoichCat))
-    delGdis_O2 <- NaN
+  if (is.nan(delGan0) & is.nan(delGan)) {
+    lambda0 <- NaN
+    lambda <- NaN
+    stoichMet <- array(NaN, dim=length(stoichCat))
+    delGdis0 <- NaN
+    delGdis <- NaN
   } else {
-    if (delGan_O2 < 0)
-      m_O2 <- 1
+    if (delGan < 0)
+      m <- 1
     else
-      m_O2 <- -1
-    lambda_O2 <- (delGan_O2*eta^m_O2+delGsyn)/(-delGcat*eta)
-    if (lambda_O2 > 0)
-      stoichMet_O2 <- lambda_O2*stoichCat+stoichAn_O2
+      m <- -1
+    
+    lambda0 <- (delGan0*eta^m+delGsyn)/(-delGcat0*eta)  # assume delGsyn0=delGsyn
+    lambda <- (delGan*eta^m+delGsyn)/(-delGcat*eta)
+    
+    if (lambda > 0)
+      stoichMet <- lambda*stoichCat+stoichAn
     else
-      stoichMet_O2 <- stoichAn_O2
-    delGdis_O2 <- -(drop(delGf0 %*% stoichMet_O2) + R*T*stoichMet_O2[iProton]*log(1e-7))
+      stoichMet <- stoichAn
+    
+    delGdis0 <- drop(delGf0 %*% stoichMet)
+    delGdis <- delGdis0 + R*T*stoichMet[iProton]*log(1e-7)
+    
+    delGdis0 <- -delGdis0
+    delGdis <- -delGdis
   }
   
-  # if (is.nan(delGan_HCO3)) {
-  #   lambda_HCO3 <- NaN
-  #   stoichMet_HCO3 <- NaN
-  #   delGdis_HCO3 <- NaN
-  # } else {
-  #   if (delGan_HCO3 < 0)
-  #     m_HCO3 <- 1
-  #   else
-  #     m_HCO3 <- -1
-  #   lambda_HCO3 <- (delGan_HCO3*eta^m_HCO3+delGsyn)/(-delGcat*eta)
-  #   
-  #   if (lambda_HCO3 > 0)
-  #     stoichMet_HCO3 <- lambda_HCO3*stoichCat+stoichAn_HCO3
-  #   else
-  #     stoichMet_HCO3 <- stoichAn_HCO3
-  #   delGdis_HCO3 <- -(drop(delGf0 %*% stoichMet_HCO3) + R*T*stoichMet_HCO3[iProton]*log(1e-7))
-  # }
-  
-  c(delGcox0,delGd0,delGcox,delGd,delGcat0,delGcat,delGan0_O2,
-    delGan_O2,delGdis_O2,lambda_O2,
-    stoichD,stoichA,stoichCat,stoichAn_O2,
-    stoichMet_O2)
+  c(delGcox0,delGd0,delGcat0,delGan0,delGdis0,lambda0,
+    delGcox,delGd,delGcat,delGan,delGdis,lambda,
+    stoichD,stoichA,stoichCat,stoichAn,stoichMet)
 }
-######################## compute lambda ########################
 
-getLambda <- function(formulaMatrix) {
-  nrows = nrow(formulaMatrix)
-  lambda_rst <- array(0, dim=c(nrows, 60))
+# compute in batch
+get_lambda <- function(formula_matrix) {
+  nrows = nrow(formula_matrix)
+  lambda_rst <- array(0, dim=c(nrows, 62))
   for(i in 1:nrows) {
-    lambda_rst[i,] <- getThermoStoich(formulaMatrix[i,])
+    lambda_rst[i,] <- getThermoStoich(formula_matrix[i,])
   }
   lambda_rst
 }
 
-# out <- getLambda(molecularFormula, numericalFormula)
-out <- getLambda(numericalFormula)
+
+# user parameters ------------------------------------------------------
+
+outfile <- "demo_input_out.txt"
+fticr_data <- read_csv("demo_input.csv")
+
+
+# main run -------------------------------------------------------------
+
+info <- get_compositions(fticr_data)
+out <- get_lambda(info$chemical_compositions)
 
 # build data frame
 df <- as.data.frame(out)
+
 # build col names
-# names <- rep("", 83)
-names <- rep("", 60)
+names <- rep("", 62)
 
-names[1:10] <- c("delGcox0","delGd0","delGcox","delGd","delGcat0","delGcat","delGan0_O2",
-                "delGan_O2","delGdis_O2","lambda_O2")
+names[1:12] <- c("delGcox0","delGd0","delGcat0","delGan0","delGdis0","lambda0",
+                 "delGcox","delGd","delGcat","delGan","delGdis","lambda")
+
 stoich_colnames <- c("donor","h2o","hco3","nh4","hpo4","hs","h","e","acceptor","biom")
+stoich_types <- c("stoichD","stoichA","stoichCat","stoichAn","stoichMet")
 
-stoich_types <- c("stoichD","stoichA","stoichCat","stoichAn_O2","stoichMet_O2")
 for (i in 1:length(stoich_types)) {
-  names[((i-1)*10+11):(i*10+10)] <- array(sapply(stoich_types[i], paste, stoich_colnames, sep="_"))
+  names[((i-1)*10+13):(i*10+12)] <- array(sapply(stoich_types[i], paste, stoich_colnames, sep="_"))
 }
 colnames(df) <- names
-df['formula'] <- molecularFormula
+df['MolForm'] <- info$formulas
 
 write.table(df, file = outfile, row.names=FALSE, sep = "\t")
-
