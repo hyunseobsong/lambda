@@ -1,8 +1,8 @@
-# Representing Organic Matter Thermodynamics in Biogeochemical Reactions via Substrate-Explicit Modeling
+# Thermodynamic modeling based on the lambda theory
 
-## Update: A newer version of the lambda code has been released on December 1, 2020.The previous code mistakenly swapped 'S' and 'P' in assigining chemical formulas, which has now been fixed. 
-
-A repository for the publication entitled ``Representing Organic Matter Thermodynamics in Biogeochemical Reactions via Substrate-Explicit Modeling`` (https://doi.org/10.3389/fmicb.2020.531756). In this paper, we proposed a new concept of biogeochemical modeling (termed substrate-explicit modeling) that enables parameterizing organic matter (OM)-specific oxidative degradation pathways and reaction rates based on the thermodynamic properties of OM pools.
+## Release notes
+* <b>[Latest version](https://github.com/hyunseobsong/lambda/tree/v0.2)</b>: Updated for general purpose. 
+* <b>[Code for the Frontiers paper](https://github.com/hyunseobsong/lambda/tree/v0.1)</b>: A repository for the publication entitled ``Representing Organic Matter Thermodynamics in Biogeochemical Reactions via Substrate-Explicit Modeling`` (https://doi.org/10.3389/fmicb.2020.531756). In this paper, we proposed a new concept of biogeochemical modeling (termed substrate-explicit modeling) that enables parameterizing organic matter (OM)-specific oxidative degradation pathways and reaction rates based on the thermodynamic properties of OM pools.
 
 ## Links
 * <b>Substrate-explicit Modeling Tutorial</b> ([KBase narrative](https://kbase.us/n/65526/69/)): It demonstates how to apply a thermodynamic theory (known as λ theory) to convert molecular formulas of compounds (derived from FTICR-MS peaks using [Formularity](https://omics.pnl.gov/software/formularity)) into stoichiometric and kinetic forms of biogeochemical reactions and how to use the resulting kinetic equations to simulate dynamic conversion of compounds in batch and continuous stirred tank reactors.
@@ -15,12 +15,10 @@ A repository for the publication entitled ``Representing Organic Matter Thermody
 R > 3.5.0
 
 ## Run the demo dataset
-To run the demo in the publication, select `samples` as either `"south"` or `"north"`. 
 ```R
 ################## User input ##################
-fticr_datafile = "fticr_data.csv"
-samples = "south"
-# samples = "north"
+outfile <- "demo_input_out.txt"
+fticr_data <- read_csv("demo_input.csv")
 ################################################
 ```
 
