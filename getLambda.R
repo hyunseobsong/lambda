@@ -200,7 +200,12 @@ getThermoStoich <- function(chemForm) {
     else
       m <- -1
     
-    lambda0 <- (delGan0*eta^m+delGsyn)/(-delGcat0*eta)  # assume delGsyn0=delGsyn
+    if (delGan0 < 0)
+      m0 <- 1
+    else
+      m0 <- -1
+    
+    lambda0 <- (delGan0*eta^m0+delGsyn)/(-delGcat0*eta)
     lambda <- (delGan*eta^m+delGsyn)/(-delGcat*eta)
     
     if (lambda > 0)
@@ -208,11 +213,8 @@ getThermoStoich <- function(chemForm) {
     else
       stoichMet <- stoichAn
     
-    delGdis0 <- drop(delGf0 %*% stoichMet)
-    delGdis <- delGdis0 + R*T*stoichMet[iProton]*log(1e-7)
-    
-    delGdis0 <- -delGdis0
-    delGdis <- -delGdis
+    delGdis0 <- drop(lambda0%*%(-delGcat0)) - delGan0
+    delGdis <- drop(lambda%*%(-delGcat)) - delGan
   }
   
   c(delGcox0,delGd0,delGcat0,delGan0,delGdis0,lambda0,
