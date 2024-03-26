@@ -1,1 +1,1 @@
-This is the code for analysis of thermodynamic properties using python in a Jupyter Notebook template.
+This is the code for analysis of thermodynamic properties using python in a Jupyter Notebook template. Also, a demo_input file has been provided with 7 compounds to run analysis for demo purpose or test purpose.
