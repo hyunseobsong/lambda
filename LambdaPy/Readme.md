@@ -1,1 +1,1 @@
-This is the code for analysis of thermodynamic properties using python in a Jupyter Notebook template. Also, a demo_input file has been provided with 7 compounds to run analysis for demo purpose or test purpose.
+This is the code for analysis of thermodynamic properties using python in a Jupyter Notebook template. Also, a demo_input file has been provided with 7 compounds to run analysis for demo purpose or test purpose. As suggested by the demo_input content, you must have a C, H, N, O, P, S, Z titled columns in your to be analyzed csv files to run the LambdaPy.
