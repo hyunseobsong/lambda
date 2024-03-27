@@ -1,0 +1,1 @@
+This is the matlab version of the lambda code. This is applicable only for the oxygen as the electron acceptor. Please use LambdaPy or LambdaR to use other non-oxygenic electron acceptor pathways. The input csv file should be in same format as for LambdaPy, please see the readme in the LambdaPy section.
