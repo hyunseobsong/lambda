@@ -1,0 +1,1 @@
+LambdaR is an implementation of the lambda modeling approach for thermodynamic modeling in both Jupyter Notebook and RMarkdown templates using R. This implementation is for those which wish to use R as opposed to other implementations in other languages. Aside from the language, the demonstration is the same as LambdaPy. 
