@@ -13,7 +13,7 @@ Song H-S, Stegen JC, Graham EB, Lee J-Y, Garayburu-Caruso VA, Nelson WC, Chen X,
 
 Zheng J, Scheibe TD, Boye K, and Song HS (2024) Thermodynamic control on the decomposition of organic matter across different electron acceptors, Soil Biology and Biochemistry, 193, 109364.
 
-Veeramani M, Kharel S, McCullough HC, Chen X, Zheng J, Stegen JC, Scheibe TD, and Song HS (2025) LambdaPy and LambdaR: Thermodynamics-Based Biogeochemical Reaction Modeling Packages for Integrating High-Resolution Mass Spectrometry Data, Modeling the Microbiome, Edited by Raman K and Sambamoorthy G, Lab Protocol Series: Methods in Molecular Biology, Springer Nature (IN press) 
+Veeramani M, Kharel S, McCullough HC, Chen X, Zheng J, Stegen JC, Scheibe TD, and Song HS (2025) LambdaPy and LambdaR: Thermodynamics-Based Biogeochemical Reaction Modeling Packages for Integrating High-Resolution Mass Spectrometry Data, Modeling the Microbiome, Edited by Raman K and Sambamoorthy G, Lab Protocol Series: Methods in Molecular Biology, Springer Nature (In press) 
 
 ## Contacts
 Hyun-Seob Song (hsong5@unl.edu)
