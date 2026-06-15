@@ -4,7 +4,6 @@ calc_bioav.py
 Given a CSV with a molecular formula column (and optionally
 pre-existing CHONPS + Mass columns), compute per-compound:
 
-  Class         -- MSCC compound class (Rivas-Ubach et al. 2018)
   stoichMet_OC  -- metabolic stoichiometry of the organic carbon donor
   stoichMet_O2  -- metabolic stoichiometry of O2
   lambda_O2_pH7     -- lambda at pH 7 (fixed reference)
@@ -52,15 +51,6 @@ compound-specific [OC]_i (mol/L) for each row. Rows where the value is missing
 or zero fall back to the scalar --OC argument. When the column is used, the
 bioav/rO2 output column names contain 'VhOC_colOC' instead of a fixed number.
 
-Attributions
-------------
-  MSCC — Multidimensional Stoichiometric Compound Classification
-    Compound classification is performed using the MSCC scheme
-    (Rivas-Ubach et al. 2018) developed at Pacific Northwest National
-    Laboratory.
-    https://github.com/PNNL-Comp-Mass-Spec/MSCC
-    License: BSD 2-Clause
-    https://github.com/PNNL-Comp-Mass-Spec/MSCC?tab=BSD-2-Clause-1-ov-file
 """
 
 import argparse
@@ -108,74 +98,6 @@ def _chonps_from_formula(formula: str) -> dict:
     result["Mass"] = sum(counts.get(el, 0) * _MONO[el]
                          for el in _MONO if el in counts)
     return result
-
-
-# ---------------------------------------------------------------------------
-# MSCC Classification  (Rivas-Ubach et al. 2018, Anal. Chem.)
-# ---------------------------------------------------------------------------
-def mscc_classify(C, H, O, N, P, S, Mass) -> str:
-    """Return MSCC compound-class label for a single compound."""
-    try:
-        C = float(C); H = float(H); O = float(O)
-        N = float(N); P = float(P); S = float(S)
-        Mass = 0.0 if pd.isna(Mass) else float(Mass)
-    except (TypeError, ValueError):
-        return "Unclassified"
-    if math.isnan(C) or C <= 0:
-        return "Unclassified"
-
-    OC = O / C
-    HC = H / C
-    NC = N / C
-    PC = P / C if C > 0 else 0.0
-    NP = N / P if P > 0 else 0.0  # MSCC convention: NP = 0 when P = 0
-
-    lipid = (OC <= 0.6   and HC >= 1.32  and NC <= 0.126
-             and PC < 0.35  and NP <= 5)
-    carb  = (OC >= 0.8   and HC >= 1.65  and HC < 2.7   and N == 0)
-    amino = (OC >= 0.61  and HC >= 1.45
-             and NC <= 0.2   and NC > 0.07
-             and PC < 0.3    and NP <= 2
-             and O >= 3      and N >= 1)
-    phyto = (OC <= 1.15  and HC < 1.32   and NC < 0.126
-             and PC <= 0.2   and NP <= 3)
-    prot1 = (OC > 0.12   and OC <= 0.6
-             and HC > 0.9    and HC < 2.5
-             and NC >= 0.126 and NC <= 0.7
-             and PC < 0.17   and N >= 1)
-    prot2 = (OC > 0.6    and OC <= 1.0
-             and HC > 1.2    and HC < 2.5
-             and NC > 0.2    and NC <= 0.7
-             and PC < 0.17   and N >= 1)
-    nuc   = (OC >= 0.5   and OC < 1.7
-             and HC > 1.0    and HC < 1.8
-             and NC >= 0.2   and NC <= 0.5
-             and PC >= 0.1   and PC <= 0.35
-             and NP > 0.6    and NP <= 5
-             and N >= 2      and P >= 1
-             and S == 0
-             and Mass > 305  and Mass < 523)
-
-    # Priority: Nucleotide > Carbohydrate > Lipid > AminoSugar >
-    #           Phytochemical > Protein
-    matches = []
-    if nuc:             matches.append("Nucleotides")
-    if carb:            matches.append("Carbohydrates")
-    if lipid:           matches.append("Lipid")
-    if amino:           matches.append("AminoSugars")
-    if phyto:           matches.append("Phytochemicals")
-    if prot1 or prot2:  matches.append("Protein")
-
-    if not matches:
-        return "Unclassified"
-    if len(matches) == 1:
-        return matches[0]
-    # Nucleotide trumps Protein / AminoSugar double-matches
-    if "Nucleotides" in matches and (
-        "Protein" in matches or "AminoSugars" in matches
-    ):
-        return "Nucleotides"
-    return matches[0]
 
 
 # ---------------------------------------------------------------------------
@@ -353,20 +275,6 @@ def process(input_path: str, output_path: str, molform_col: str,
     # Fill any remaining NaN CHONPS with 0 for elements other than C
     for col in ["H", "O", "N", "P", "S"]:
         df[col] = df[col].fillna(0.0)
-
-    # ---- MSCC Class --------------------------------------------------------
-    print("Assigning MSCC compound classes …")
-    if molform_col not in df.columns:
-        df["Class"] = "Unclassified"
-    else:
-        df["Class"] = df.apply(
-            lambda r: mscc_classify(r["C"], r["H"], r["O"],
-                                    r["N"], r["P"], r["S"], r.get("Mass", 0)),
-            axis=1,
-        )
-    print("  Class counts:")
-    for cls, cnt in df["Class"].value_counts().items():
-        print(f"    {cls:20s}  {cnt:6,}")
 
     # ---- OC concentration: per-row column or scalar ----------------------
     OM_COL = "OM_Concentration"
